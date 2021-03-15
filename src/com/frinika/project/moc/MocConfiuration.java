@@ -6,7 +6,7 @@ import java.util.Properties;
 import uk.org.toot.audio.server.AudioServerConfiguration;
 import uk.org.toot.audio.server.ExtendedAudioServer;
 
-public class MocConfiuration  extends AudioServerConfiguration {
+public class MocConfiuration extends AudioServerConfiguration {
     private static final String USER_BUFFER = ".buffer.milliseconds";
     private static final String LATENCY = ".latency.milliseconds";
     private static final String PRIORITY = ".priority";
@@ -16,13 +16,20 @@ public class MocConfiuration  extends AudioServerConfiguration {
   }
 
   private FrinikaAudioServer server;
-    private boolean hasPriority;
+
+  public void setProperties(Properties properties) {
+    this.properties = properties;
+  }
+
+  public  Properties properties;
+
+  private boolean hasPriority;
 
   public MocConfiuration() {
   }
 
     public Properties getProperties() {
-      Properties p = new Properties();
+
 //      String k = this.server.getConfigKey();
 //      p.setProperty(k + ".buffer.milliseconds", String.valueOf(this.server.getBufferMilliseconds()));
 //      p.setProperty(k + ".latency.milliseconds", String.valueOf(this.server.getLatencyMilliseconds()));
@@ -31,7 +38,7 @@ public class MocConfiuration  extends AudioServerConfiguration {
 //        p.setProperty(k + ".priority", String.valueOf(pas.getPriority()));
 //      }
 
-      return p;
+      return properties;
     }
 
     public void applyProperties(Properties p) {
