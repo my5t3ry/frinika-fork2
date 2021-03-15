@@ -31,6 +31,7 @@
 package com.frinika.project;
 
 import com.frinika.audio.frogdisco.FrogDiscoAudioServer;
+import com.frinika.project.moc.MocConfiuration;
 import java.util.List;
 import java.util.Observer;
 import java.util.Observable;
@@ -39,6 +40,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JComponent;
 
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import uk.org.toot.audio.server.ExtendedAudioServerConfiguration;
 import uk.org.toot.swingui.audioui.serverui.*;
 
 import com.frinika.global.FrinikaConfig;
@@ -103,9 +107,17 @@ public class FrinikaAudioSystem {
 			}
 
 			audioServer = new FrinikaAudioServer(realAudioServer);
+//
+//			serverConfig = AudioServerServices
+//			.createServerConfiguration(realAudioServer);
 
-			serverConfig = AudioServerServices
-			.createServerConfiguration(realAudioServer);
+//			JSONArray jsonArray = JSONArray.fromObject( serverConfig );
+
+			String json = "{\"properties\":{\"java_multiplexed.buffer.milliseconds\":\"2.0\",\"java_multiplexed.latency.milliseconds\":\"70.0\",\"java_multiplexed.priority\":\"0\"}}";
+			JSONObject jsonObject = JSONObject.fromObject( json );
+			serverConfig = (MocConfiuration) JSONObject.toBean( jsonObject, MocConfiuration.class );
+
+			((MocConfiuration)serverConfig).setServer((FrinikaAudioServer) audioServer);
 			serverConfig.addObserver(new Observer() {
 				public void update(Observable obs, Object obj) {
 					saveServerConfig();

@@ -268,5 +268,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="net.sf.json-lib:json-lib:2.2.3" level="project" />
   </component>
 </module>
