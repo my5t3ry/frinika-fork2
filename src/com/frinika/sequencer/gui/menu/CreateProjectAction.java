@@ -25,6 +25,7 @@ package com.frinika.sequencer.gui.menu;
 
 import static com.frinika.localization.CurrentLocale.getMessage;
 
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +47,8 @@ public class CreateProjectAction extends  AbstractAction {
 
 	
 			try {
-				
+				System.out.println(String.format(" ProjectFrame GraphicsEnvoirement.isHeadless: ['%s']",
+						GraphicsEnvironment.isHeadless()));
 				frame=new ProjectFrame(new ProjectContainer());
 			} catch (Exception e3) {
 				// TODO Auto-generated catch block
@@ -69,7 +71,7 @@ public class CreateProjectAction extends  AbstractAction {
 			}
 			
 			try {
-			
+
 				frame=new ProjectFrame(new ProjectContainer());
 			} catch (Exception e2) {
 				// TODO Auto-generated catch block

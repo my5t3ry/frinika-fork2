@@ -4,6 +4,7 @@
 // http://www.toot.org/LICENSE_1_0.txt)
 
 package com.frinika.project.websocket;
+
 import com.frinika.toot.PriorityAudioServer;
 import com.sun.media.sound.SoftMixingMixer;
 import java.util.ArrayList;
@@ -21,36 +22,38 @@ import javax.sound.sampled.Mixer.Info;
 import uk.org.toot.audio.core.AudioBuffer;
 import uk.org.toot.audio.core.ChannelFormat;
 import uk.org.toot.audio.core.AudioBuffer.MetaInfo;
+import uk.org.toot.audio.server.AbstractAudioServer;
 import uk.org.toot.audio.server.AudioLine;
 import uk.org.toot.audio.server.IOAudioProcess;
 import uk.org.toot.audio.server.JavaSoundAudioServer;
 
 /**
- * An Audiothis that adapts any other Audiothis to add
- * a non-real-time capability.
+ * An Audiothis that adapts any other Audiothis to add a non-real-time capability.
  */
 public class WebsocketAudioServer
-    extends PriorityAudioServer
-{
+    extends AbstractAudioServer {
+
   private byte[] sharedByteBuffer;
   private int sampleSizeInBits = 16;
   private float sampleRate = 44100.0F;
   private AudioFormat format;
-  private List<WebsocketAudioOutput> outputs;
-  private List<WebsockeAudioInput> inputs;
+  private List<WebsocketAudioServer.WebsocketAudioOutput> outputs;
+  private List<WebsocketAudioServer.WebsockeAudioInput> inputs;
   private int lineBufferBytes = 32768;
-  private SoftMixingMixer mixer= new SoftMixingMixer();
+  private SoftMixingMixer mixer = new SoftMixingMixer();
+  private boolean running = false;
 
   public WebsocketAudioServer() {
-    this.bufferFrames = this.calculateBufferFrames();
+    bufferFrames = 128;
     this.outputs = new ArrayList();
     this.inputs = new ArrayList();
   }
 
   protected void checkFormat() {
     if (this.format == null) {
-      this.format = new AudioFormat(this.getSampleRate(), this.getSampleSizeInBits(), 2, true, false);
-      this.lineBufferBytes = this.format.getFrameSize() * (int)this.getSampleRate() / 5;
+      this.format = new AudioFormat(this.getSampleRate(), this.getSampleSizeInBits(), 2, true,
+          false);
+      this.lineBufferBytes = this.format.getFrameSize() * (int) this.getSampleRate() / 5;
       this.sharedByteBuffer = this.createByteBuffer();
     }
   }
@@ -79,13 +82,6 @@ public class WebsocketAudioServer
     }
   }
 
-  public List<AudioLine> getOutputs() {
-    return Collections.unmodifiableList(this.outputs);
-  }
-
-  public List<AudioLine> getInputs() {
-    return Collections.unmodifiableList(this.inputs);
-  }
 
   protected void resizeBuffers(int bufferFrames) {
     super.resizeBuffers(bufferFrames);
@@ -99,73 +95,39 @@ public class WebsocketAudioServer
   }
 
   public int getOutputLatencyFrames() {
-    return this.syncLine == null ? 0 : this.syncLine.getLatencyFrames();
+    return 128;
+  }
+
+  @Override
+  public int getTotalLatencyFrames() {
+    return 0;
   }
 
   public int getInputLatencyFrames() {
-    return this.inputs.size() == 0 ? 0 : ((WebsockeAudioInput)this.inputs.get(0)).getLatencyFrames();
+    return this.inputs.size() == 0 ? 0
+        : ((WebsockeAudioInput) this.inputs.get(0)).getLatencyFrames();
+  }
+
+  @Override
+  public boolean isRunning() {
+    return this.running;
   }
 
   public List<String> getAvailableOutputNames() {
-//    List<String> names = new ArrayList();
-//    Info[] infos = AudioSystem.getMixerInfo();
-//
-//    for(int i = 0; i < infos.length; ++i) {
-//      if (!infos[i].getName().startsWith("Port ")) {
-//        Mixer mixer = AudioSystem.getMixer(infos[i]);
-//        javax.sound.sampled.Line.Info[] lines = mixer.getSourceLineInfo();
-//        if (lines.length > 0) {
-//          names.add(infos[i].getName());
-//        }
-//      }
-//    }
 
-    return Arrays.asList("1","2");
+    return Arrays.asList( mixer.getMixerInfo().getName());
   }
 
   public List<String> getAvailableInputNames() {
-    List<String> names = new ArrayList();
-    Info[] infos = AudioSystem.getMixerInfo();
-
-    for(int i = 0; i < infos.length; ++i) {
-      if (!infos[i].getName().startsWith("Port ")) {
-        Mixer mixer = AudioSystem.getMixer(infos[i]);
-        javax.sound.sampled.Line.Info[] lines = mixer.getTargetLineInfo();
-        if (lines.length > 0) {
-          names.add(infos[i].getName());
-        }
-      }
-    }
 //
-    return names;
+    return Arrays.asList( mixer.getMixerInfo().getName());
   }
 
   protected Info inputForName(String name) {
-//    Info[] infos = AudioSystem.getMixearInfo();
-//
-//    for(int i = 0; i < infos.length; ++i) {
-//      Mixer mixer = AudioSystem.getMixer(infos[i]);
-//      javax.sound.sampled.Line.Info[] lines = mixer.getTargetLineInfo();
-//      if (lines.length > 0 && infos[i].getName().indexOf(name) >= 0) {
-//        return infos[i];
-//      }
-//    }
-//
-//    System.out.println("Oops, no input named " + name);
     return mixer.getMixerInfo();
   }
 
   protected Info outputForName(String name) {
-//
-//    for(int i = 0; i < infos.length; ++i) {
-//      Mixer mixer = AudioSystem.getMixer(infos[i]);
-//      javax.sound.sampled.Line.Info[] lines = mixer.getSourceLineInfo();
-//      if (lines.length > 0 && infos[i].getName().indexOf(name) >= 0) {
-//        return infos[i];
-//      }
-//    }
-//
-//    System.out.println("Oops, no output named " + name);
     return mixer.getMixerInfo();
   }
 
@@ -173,8 +135,8 @@ public class WebsocketAudioServer
     Iterator i$ = this.inputs.iterator();
 
     WebsocketAudioOutput output;
-    while(i$.hasNext()) {
-      output = (WebsocketAudioOutput)i$.next();
+    while (i$.hasNext()) {
+      output = (WebsocketAudioOutput) i$.next();
 
       try {
         output.start();
@@ -185,8 +147,8 @@ public class WebsocketAudioServer
 
     i$ = this.outputs.iterator();
 
-    while(i$.hasNext()) {
-      output = (WebsocketAudioOutput)i$.next();
+    while (i$.hasNext()) {
+      output = (WebsocketAudioOutput) i$.next();
 
       try {
         output.start();
@@ -195,16 +157,16 @@ public class WebsocketAudioServer
       }
     }
 
-    super.startImpl();
+    running =true;
   }
 
   protected void stopImpl() {
-    super.stopImpl();
+
     Iterator i$ = this.outputs.iterator();
 
     WebsockeAudioInput input;
-    while(i$.hasNext()) {
-      input = (WebsockeAudioInput)i$.next();
+    while (i$.hasNext()) {
+      input = (WebsockeAudioInput) i$.next();
 
       try {
         input.stop();
@@ -215,8 +177,8 @@ public class WebsocketAudioServer
 
     i$ = this.inputs.iterator();
 
-    while(i$.hasNext()) {
-      input = (WebsockeAudioInput)i$.next();
+    while (i$.hasNext()) {
+      input = (WebsockeAudioInput) i$.next();
 
       try {
         input.stop();
@@ -228,14 +190,14 @@ public class WebsocketAudioServer
   }
 
   public IOAudioProcess openAudioOutput(String name, String label) throws Exception {
-    boolean wasRunning = this.isRunning;
+    boolean wasRunning = this.running;
     this.checkFormat();
-    if (this.isRunning) {
+    if (this.running) {
       this.stop();
     }
 
     if (name == null) {
-      name = (String)this.getAvailableOutputNames().get(0);
+      name = (String) this.getAvailableOutputNames().get(0);
       System.out.println(label + " null name specified, using " + name);
     }
 
@@ -260,7 +222,7 @@ public class WebsocketAudioServer
     if (!(output instanceof WebsocketAudioOutput)) {
       throw new IllegalArgumentException(output.getName() + " is not a JavaSoundAudioOutput");
     } else {
-      WebsocketAudioOutput jsoutput = (WebsocketAudioOutput)output;
+      WebsocketAudioOutput jsoutput = (WebsocketAudioOutput) output;
       if (jsoutput.isActive()) {
         jsoutput.stop();
       }
@@ -273,14 +235,15 @@ public class WebsocketAudioServer
   public IOAudioProcess openAudioInput(String name, String label) throws Exception {
     this.checkFormat();
     if (name == null) {
-      name = (String)this.getAvailableInputNames().get(0);
+      name = (String) this.getAvailableInputNames().get(0);
       System.out.println(label + " null name specified, using " + name);
     }
 
-    WebsockeAudioInput input = new WebsockeAudioInput(this.format, this.inputForName(name), label, name);
+    WebsockeAudioInput input = new WebsockeAudioInput(this.format, this.inputForName(name), label,
+        name);
     input.open();
     this.inputs.add(input);
-    if (this.isRunning) {
+    if (this.running) {
       input.start();
     }
 
@@ -291,7 +254,7 @@ public class WebsocketAudioServer
     if (!(input instanceof WebsockeAudioInput)) {
       throw new IllegalArgumentException(input.getName() + " is not a JavaSoundAudioInput");
     } else {
-      WebsockeAudioInput jsinput = (WebsockeAudioInput)input;
+      WebsockeAudioInput jsinput = (WebsockeAudioInput) input;
       if (jsinput.isActive()) {
         jsinput.stop();
       }
@@ -300,20 +263,11 @@ public class WebsocketAudioServer
       this.inputs.remove(input);
     }
   }
-
-  public void setLatencyMilliseconds(float ms) {
-    if (ms < this.getLatencyMilliseconds()) {
-      this.minimiseInputLatency();
-    }
-
-    super.setLatencyMilliseconds(ms);
-  }
-
   protected void minimiseInputLatency() {
     Iterator i$ = this.inputs.iterator();
 
-    while(i$.hasNext()) {
-      WebsockeAudioInput input = (WebsockeAudioInput)i$.next();
+    while (i$.hasNext()) {
+      WebsockeAudioInput input = (WebsockeAudioInput) i$.next();
       input.flush();
     }
 
@@ -321,7 +275,6 @@ public class WebsocketAudioServer
 
   protected void controlGained() {
     this.minimiseInputLatency();
-    super.controlGained();
   }
 
   public String getConfigKey() {
@@ -329,53 +282,55 @@ public class WebsocketAudioServer
   }
 
 
-protected class WebsockeAudioInput extends WebsockerSoundAudioLine {
-  protected TargetDataLine lineIn;
-  protected javax.sound.sampled.DataLine.Info infoIn;
-  protected MetaInfo metaInfo;
-  protected long framesRead = 0L;
-  private boolean doFlush = false;
+  protected class WebsockeAudioInput extends WebsockerSoundAudioLine {
 
-  public WebsockeAudioInput(AudioFormat format, Info info, String label, String location) throws LineUnavailableException {
-    super(format, info, label);
-    this.infoIn = new javax.sound.sampled.DataLine.Info(TargetDataLine.class, format);
-    if (!AudioSystem.getMixer(this.mixerInfo).isLineSupported(this.infoIn)) {
-      throw new LineUnavailableException(this.mixerInfo + " does not support " + this.infoIn);
-    } else {
-      this.metaInfo = new MetaInfo(label, location);
-    }
-  }
+    protected TargetDataLine lineIn;
+    protected javax.sound.sampled.DataLine.Info infoIn;
+    protected MetaInfo metaInfo;
+    protected long framesRead = 0L;
+    private boolean doFlush = false;
 
-  public void open() throws Exception {
-    if (this.lineIn == null || !this.lineIn.isOpen()) {
-      this.lineIn = (TargetDataLine)AudioSystem.getMixer(this.mixerInfo).getLine(this.infoIn);
-      this.lineIn.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
-    }
-  }
-
-  public void start() throws Exception {
-    this.framesRead = this.lineIn.getLongFramePosition();
-    this.lineIn.start();
-  }
-
-  public void stop() {
-    this.lineIn.stop();
-    this.lineIn.flush();
-  }
-
-  public void close() {
-    if (this.lineIn != null && this.lineIn.isOpen()) {
-      this.lineIn.close();
+    public WebsockeAudioInput(AudioFormat format, Info info, String label, String location)
+        throws LineUnavailableException {
+      super(format, info, label);
+      this.infoIn = new javax.sound.sampled.DataLine.Info(TargetDataLine.class, format);
+      if (!mixer.isLineSupported(this.infoIn)) {
+        throw new LineUnavailableException(this.mixerInfo + " does not support " + this.infoIn);
+      } else {
+        this.metaInfo = new MetaInfo(label, location);
+      }
     }
 
-  }
+    public void open() throws Exception {
+      if (this.lineIn == null || !this.lineIn.isOpen()) {
+        this.lineIn = (TargetDataLine) AudioSystem.getMixer(this.mixerInfo).getLine(this.infoIn);
+        this.lineIn.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
+      }
+    }
 
-  public void flush() {
-    this.doFlush = true;
-  }
+    public void start() throws Exception {
+      this.framesRead = this.lineIn.getLongFramePosition();
+      this.lineIn.start();
+    }
 
-  public int processAudio(AudioBuffer buffer) {
-    buffer.setMetaInfo(this.metaInfo);
+    public void stop() {
+      this.lineIn.stop();
+      this.lineIn.flush();
+    }
+
+    public void close() {
+      if (this.lineIn != null && this.lineIn.isOpen()) {
+        this.lineIn.close();
+      }
+
+    }
+
+    public void flush() {
+      this.doFlush = true;
+    }
+
+    public int processAudio(AudioBuffer buffer) {
+      buffer.setMetaInfo(this.metaInfo);
 //    if (!buffer.isRealTime()) {
 //      return 1;
 //    } else {
@@ -399,67 +354,56 @@ protected class WebsockeAudioInput extends WebsockerSoundAudioLine {
 //
 //      return 0;
 //    }
-    return 0;
-  }
+      return 0;
+    }
 
-  public boolean isActive() {
-    return this.lineIn == null ? false : this.lineIn.isActive();
-  }
-}
-
-protected class WebsocketAudioOutput extends WebsockerSoundAudioLine {
-  protected SourceDataLine lineOut;
-  protected javax.sound.sampled.DataLine.Info infoOut;
-  protected long framesWritten = 0L;
-
-  public WebsocketAudioOutput(AudioFormat format, Info info, String label) throws LineUnavailableException {
-    super(format, info, label);
-    this.infoOut = new javax.sound.sampled.DataLine.Info(SourceDataLine.class, format);
-    if (!AudioSystem.getMixer(this.mixerInfo).isLineSupported(this.infoOut)) {
-      throw new LineUnavailableException(info + " does not support " + this.infoOut);
-    } else {
-
-
-
+    public boolean isActive() {
+      return this.lineIn == null ? false : this.lineIn.isActive();
     }
   }
 
-  public void open() throws Exception {
-    if (this.lineOut == null || !this.lineOut.isOpen()) {
-      this.lineOut = (SourceDataLine)AudioSystem.getMixer(this.mixerInfo).getLine(this.infoOut);
-      this.lineOut.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
-      if (WebsocketAudioServer.this.syncLine == this) {
-        if (this.lineOut.getBufferSize() != WebsocketAudioServer.this.lineBufferBytes) {
-          System.out.println("JavaSound Line buffer: " + WebsocketAudioServer.this.lineBufferBytes + " bytes requested, " + this.lineOut.getBufferSize() + " bytes returned.");
-          WebsocketAudioServer.this.lineBufferBytes = this.lineOut.getBufferSize();
-        }
+  protected class WebsocketAudioOutput extends WebsockerSoundAudioLine {
 
-        WebsocketAudioServer.this.maximumLatencyMilliseconds = (float)(1000 * WebsocketAudioServer.this.lineBufferBytes / this.format.getFrameSize()) / this.format.getSampleRate();
-        WebsocketAudioServer var10000 = WebsocketAudioServer.this;
-        var10000.maximumLatencyMilliseconds -= 10.0F;
+    protected SourceDataLine lineOut;
+    protected javax.sound.sampled.DataLine.Info infoOut;
+    protected long framesWritten = 0L;
+
+    public WebsocketAudioOutput(AudioFormat format, Info info, String label)
+        throws LineUnavailableException {
+      super(format, info, label);
+      this.infoOut = new javax.sound.sampled.DataLine.Info(SourceDataLine.class, format);
+      if (!mixer.isLineSupported(this.infoOut)) {
+        throw new LineUnavailableException(info + " does not support " + this.infoOut);
+      } else {
+
+      }
+    }
+
+    public void open() throws Exception {
+      if (this.lineOut == null || !this.lineOut.isOpen()) {
+        this.lineOut = (SourceDataLine) mixer.getLine(this.infoOut);
+//        this.lineOut.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
+       }
+    }
+
+    public void start() throws Exception {
+      this.framesWritten = this.lineOut.getLongFramePosition();
+      this.lineOut.start();
+    }
+
+    public void stop() {
+      this.lineOut.stop();
+      this.lineOut.flush();
+    }
+
+    public void close() {
+      if (this.lineOut != null && this.lineOut.isOpen()) {
+        this.lineOut.close();
       }
 
     }
-  }
 
-  public void start() throws Exception {
-    this.framesWritten = this.lineOut.getLongFramePosition();
-    this.lineOut.start();
-  }
-
-  public void stop() {
-    this.lineOut.stop();
-    this.lineOut.flush();
-  }
-
-  public void close() {
-    if (this.lineOut != null && this.lineOut.isOpen()) {
-      this.lineOut.close();
-    }
-
-  }
-
-  public int processAudio(AudioBuffer buffer) {
+    public int processAudio(AudioBuffer buffer) {
 //    if (!buffer.isRealTime()) {
 //      return 0;
 //    } else {
@@ -477,51 +421,52 @@ protected class WebsocketAudioOutput extends WebsockerSoundAudioLine {
 //
 //      return 0;
 //    }
-    return 0;
-  }
-
-  public boolean isActive() {
-    return this.lineOut == null ? false : this.lineOut.isActive();
-  }
-}
-
-protected abstract class WebsockerSoundAudioLine implements AudioLine {
-  protected AudioFormat format;
-  protected Info mixerInfo;
-  protected String label;
-  protected int latencyFrames = -1;
-  protected ChannelFormat channelFormat;
-
-  public WebsockerSoundAudioLine(AudioFormat format, Info info, String label) {
-    this.format = format;
-    this.mixerInfo = info;
-    this.label = label;
-    switch(format.getChannels()) {
-      case 1:
-        this.channelFormat = ChannelFormat.MONO;
-        break;
-      case 2:
-        this.channelFormat = ChannelFormat.STEREO;
+      return 0;
     }
 
+    public boolean isActive() {
+      return this.lineOut == null ? false : this.lineOut.isActive();
+    }
   }
 
-  public String getName() {
-    return this.label;
+  protected abstract class WebsockerSoundAudioLine implements AudioLine {
+
+    protected AudioFormat format;
+    protected Info mixerInfo;
+    protected String label;
+    protected int latencyFrames = -1;
+    protected ChannelFormat channelFormat;
+
+    public WebsockerSoundAudioLine(AudioFormat format, Info info, String label) {
+      this.format = format;
+      this.mixerInfo = info;
+      this.label = label;
+      switch (format.getChannels()) {
+        case 1:
+          this.channelFormat = ChannelFormat.MONO;
+          break;
+        case 2:
+          this.channelFormat = ChannelFormat.STEREO;
+      }
+
+    }
+
+    public String getName() {
+      return this.label;
+    }
+
+    public ChannelFormat getChannelFormat() {
+      return this.channelFormat;
+    }
+
+    public int getLatencyFrames() {
+      return this.latencyFrames;
+    }
+
+    public abstract void start() throws Exception;
+
+    public abstract void stop() throws Exception;
+
+    public abstract boolean isActive();
   }
-
-  public ChannelFormat getChannelFormat() {
-    return this.channelFormat;
-  }
-
-  public int getLatencyFrames() {
-    return this.latencyFrames;
-  }
-
-  public abstract void start() throws Exception;
-
-  public abstract void stop() throws Exception;
-
-  public abstract boolean isActive();
-}
 }

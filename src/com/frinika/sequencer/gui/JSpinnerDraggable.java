@@ -50,8 +50,7 @@ public class JSpinnerDraggable extends JSpinner implements MouseMotionListener {
 	
 	protected int drag = 0;
 	protected int keysTyped = 0;
-	protected Robot robot;
-	
+
 	/**
 	 * 
 	 */
@@ -69,11 +68,11 @@ public class JSpinnerDraggable extends JSpinner implements MouseMotionListener {
 	}
 	
 	private void init() {
-		try {
-			robot = new Robot();
-		} catch (AWTException awte) {
-			awte.printStackTrace();
-		}
+//		try {
+//			robot = new Robot();
+//		} catch (AWTException awte) {
+//			awte.printStackTrace();
+//		}
 		JSpinner.DefaultEditor e = (JSpinner.DefaultEditor)this.getEditor();
 		JTextField field = e.getTextField();
 		MouseMotionListener[] listeners = field.getMouseMotionListeners();
@@ -104,13 +103,9 @@ public class JSpinnerDraggable extends JSpinner implements MouseMotionListener {
 		}
 		diff /= FrinikaConfig.MOUSE_NUMBER_DRAG_INTENSITY; // speed factor
 		while (keysTyped < diff) {
-			robot.keyPress(KeyEvent.VK_DOWN);			
-			robot.keyRelease(KeyEvent.VK_DOWN);			
 			keysTyped++;
 		}
 		while (keysTyped > diff) {
-			robot.keyPress(KeyEvent.VK_UP);			
-			robot.keyRelease(KeyEvent.VK_UP);			
 			keysTyped--;
 		}
 	}

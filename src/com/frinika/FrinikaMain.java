@@ -14,6 +14,7 @@ import com.frinika.tootX.midi.MidiInDeviceManager;
 
 import com.jgoodies.looks.plastic.PlasticLookAndFeel;
 import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -25,11 +26,11 @@ import net.roydesign.app.Application;
  * Created on Mar 6, 2006
  *
  * Copyright (c) 2004-2006 Peter Johan Salomonsen (http://www.petersalomonsen.com)
- * 
+ *
  * http://www.frinika.com
- * 
+ *
  * This file is part of Frinika.
- * 
+ *
  * Frinika is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -47,7 +48,7 @@ import net.roydesign.app.Application;
 
 /**
  * The main entry class for Frinika
- * 
+ *
  * @author Peter Johan Salomonsen
  */
 public class FrinikaMain {
@@ -58,32 +59,33 @@ public class FrinikaMain {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		
+
 		prepareRunningFromSingleJar();
-		
+
 		configureUI();
 
 		try {
 			int n = 1;
-	
+
 			Object[] options = { getMessage("welcome.new_project"),
 					getMessage("welcome.open_existing"),
 					getMessage("welcome.settings"), getMessage("welcome.quit") };
 
 			//String setup = FrinikaConfig.getProperty("multiplexed_audio");
-			
+
 			WelcomeDialog welcome= new WelcomeDialog(options);
+			System.out.println(String.format("GraphicsEnvoirement.isHeadless: ['%s']",GraphicsEnvironment.isHeadless()));
 
 			//if (setup == null) {
 			if ( !FrinikaConfig.SETUP_DONE ) {
-			//	welcome = new WelcomeDialog(options);
+				//	welcome = new WelcomeDialog(options);
 				welcome.setModal(false);
 				welcome.setVisible(true);
 				SetupDialog.showSettingsModal();
 				welcome.setVisible(false);
-			} 
-			
-			
+			}
+
+
 			welcome.setModal(true);
 
 			welcome.addButtonActionListener(2, new ActionListener() {
@@ -94,31 +96,31 @@ public class FrinikaMain {
 
 			welcome.setVisible(true);
 
-		
+
 			n = welcome.getSelectedOption();
 
 			switch (n) {
-			case -1:
-				System.exit(0);
-				break;
-			case 0:
-				// new ProjectFrame(new ProjectContainer());
-				SplashDialog.showSplash();
-				new CreateProjectAction().actionPerformed(null);
-				break;
-			case 1:
-				SplashDialog.showSplash();
-				String lastFile = FrinikaConfig.lastProjectFile();
-				if (lastFile != null)
-					OpenProjectAction.setSelectedFile(new File(lastFile));
-				new OpenProjectAction().actionPerformed(null);
-				break;
-			case 3:
-				System.exit(0);
-				break;
+				case -1:
+					System.exit(0);
+					break;
+				case 0:
+//					 new ProjectFrame(new ProjectContainer());
+					SplashDialog.showSplash();
+					new CreateProjectAction().actionPerformed(null);
+					break;
+				case 1:
+					SplashDialog.showSplash();
+					String lastFile = FrinikaConfig.lastProjectFile();
+					if (lastFile != null)
+						OpenProjectAction.setSelectedFile(new File(lastFile));
+					new OpenProjectAction().actionPerformed(null);
+					break;
+				case 3:
+					System.exit(0);
+					break;
 
-			default:
-				assert (false);
+				default:
+					assert (false);
 			}
 
 		} catch (Exception e) {
@@ -147,7 +149,7 @@ public class FrinikaMain {
 	public static boolean isMac() {
 		return ismac;
 	}
-	
+
 	public static void configureUI() {
 
 		String lcOSName = System.getProperty("os.name").toLowerCase();
