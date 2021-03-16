@@ -32,6 +32,7 @@ package com.frinika.project;
 
 import com.frinika.audio.frogdisco.FrogDiscoAudioServer;
 import com.frinika.project.moc.MocConfiuration;
+import com.frinika.project.websocket.WebsocketAudioServer;
 import java.util.List;
 import java.util.Observer;
 import java.util.Observable;
@@ -84,29 +85,8 @@ public class FrinikaAudioSystem {
         public static boolean usePhysicalAudioOutput = true;
         
 	public static FrinikaAudioServer getAudioServer() {
-		if (audioServer != null)
-			return audioServer;
 
-		try {
-			// JJack will recognise this name when setting up the jjack client
-			System.setProperty("jjack.client.name", "Frinika");
-
-			boolean multiplexIO = FrinikaConfig.MULTIPLEXED_AUDIO;
-			// .getPropertyBoolean("multiplexed_audio");
-
-			if (!multiplexIO) {
-                            realAudioServer = new MultiIOJavaSoundAudioServer();
-                            //realAudioServer = new FrogDiscoAudioServer();
-			} else {
-				System.out
-						.println(" WARNING USING EXPERIMENTAL MULTIPLEXED AUDIO SERVER ");
-				MultiplexedJavaSoundAudioServer s = new MultiplexedJavaSoundAudioServer();
-				realAudioServer = s;
-				configureMultiplexed(s);
-				
-			}
-
-			audioServer = new FrinikaAudioServer(realAudioServer);
+			audioServer = new FrinikaAudioServer(new WebsocketAudioServer());
 //
 //			serverConfig = AudioServerServices
 //			.createServerConfiguration(realAudioServer);
@@ -128,13 +108,7 @@ public class FrinikaAudioSystem {
 					.getSampleCount();
 			audioServer.setClient(mixerSwitch);
 			return audioServer;
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println(" Too frightened to carry on !!!");
-			System.exit(-1);
-			return null;
 		}
-	}
 
 	/**
 	 * This is intended for Step 1 of the SplashScreen audio server setup. This

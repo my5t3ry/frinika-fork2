@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/frinika.iml" filepath="$PROJECT_DIR$/frinika.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frinika-fork2.iml" filepath="$PROJECT_DIR$/frinika-fork2.iml" />
     </modules>
   </component>
 </project>
