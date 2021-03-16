@@ -40,7 +40,7 @@ public class WebsocketAudioServer
   private List<WebsocketAudioServer.WebsocketAudioOutput> outputs;
   private List<WebsocketAudioServer.WebsockeAudioInput> inputs;
   private int lineBufferBytes = 32768;
-  private SoftMixingMixer mixer = new SoftMixingMixer();
+  private WebsocketMixer mixer = new WebsocketMixer();
   private boolean running = false;
 
   public WebsocketAudioServer() {
@@ -331,29 +331,29 @@ public class WebsocketAudioServer
 
     public int processAudio(AudioBuffer buffer) {
       buffer.setMetaInfo(this.metaInfo);
-//    if (!buffer.isRealTime()) {
-//      return 1;
-//    } else {
-//      buffer.setChannelFormat(this.channelFormat);
-//      int avail = this.lineIn.available();
-//      if (avail < WebsocketAudioServer.this.sharedByteBuffer.length) {
-//        buffer.makeSilence();
-//      } else {
-//        this.latencyFrames = (int)(this.lineIn.getLongFramePosition() - this.framesRead);
-//        this.lineIn.read(WebsocketAudioServer.this.sharedByteBuffer, 0, WebsocketAudioServer.this.sharedByteBuffer.length);
-//        buffer.initFromByteArray(WebsocketAudioServer.this.sharedByteBuffer, 0, WebsocketAudioServer.this.sharedByteBuffer.length, this.format);
-//        this.framesRead += (long)(WebsocketAudioServer.this.sharedByteBuffer.length / this.format.getFrameSize());
-//        if (this.doFlush) {
-//          this.lineIn.flush();
-//          long fp = this.lineIn.getLongFramePosition();
-//          this.framesRead = fp;
-//          this.latencyFrames = 0;
-//          this.doFlush = false;
-//        }
-//      }
-//
+    if (!buffer.isRealTime()) {
+      return 1;
+    } else {
+      buffer.setChannelFormat(this.channelFormat);
+      int avail = this.lineIn.available();
+      if (avail < WebsocketAudioServer.this.sharedByteBuffer.length) {
+        buffer.makeSilence();
+      } else {
+        this.latencyFrames = (int)(this.lineIn.getLongFramePosition() - this.framesRead);
+        this.lineIn.read(WebsocketAudioServer.this.sharedByteBuffer, 0, WebsocketAudioServer.this.sharedByteBuffer.length);
+        buffer.initFromByteArray(WebsocketAudioServer.this.sharedByteBuffer, 0, WebsocketAudioServer.this.sharedByteBuffer.length, this.format);
+        this.framesRead += (long)(WebsocketAudioServer.this.sharedByteBuffer.length / this.format.getFrameSize());
+        if (this.doFlush) {
+          this.lineIn.flush();
+          long fp = this.lineIn.getLongFramePosition();
+          this.framesRead = fp;
+          this.latencyFrames = 0;
+          this.doFlush = false;
+        }
+      }
+
 //      return 0;
-//    }
+    }
       return 0;
     }
 
@@ -364,14 +364,14 @@ public class WebsocketAudioServer
 
   protected class WebsocketAudioOutput extends WebsockerSoundAudioLine {
 
-    protected SourceDataLine lineOut;
+    protected WebsocketSourceDataLine lineOut;
     protected javax.sound.sampled.DataLine.Info infoOut;
     protected long framesWritten = 0L;
 
     public WebsocketAudioOutput(AudioFormat format, Info info, String label)
         throws LineUnavailableException {
       super(format, info, label);
-      this.infoOut = new javax.sound.sampled.DataLine.Info(SourceDataLine.class, format);
+      this.infoOut = new javax.sound.sampled.DataLine.Info(WebsocketSourceDataLine.class, format);
       if (!mixer.isLineSupported(this.infoOut)) {
         throw new LineUnavailableException(info + " does not support " + this.infoOut);
       } else {
@@ -381,8 +381,8 @@ public class WebsocketAudioServer
 
     public void open() throws Exception {
       if (this.lineOut == null || !this.lineOut.isOpen()) {
-        this.lineOut = (SourceDataLine) mixer.getLine(this.infoOut);
-//        this.lineOut.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
+        this.lineOut = (WebsocketSourceDataLine) mixer.getLine(this.infoOut);
+        this.lineOut.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
        }
     }
 
@@ -404,24 +404,23 @@ public class WebsocketAudioServer
     }
 
     public int processAudio(AudioBuffer buffer) {
-//    if (!buffer.isRealTime()) {
-//      return 0;
-//    } else {
-//      int nbytes = buffer.convertToByteArray(WebsocketAudioServer.this.sharedByteBuffer, 0, this.format);
-//      if (this.lineOut.available() > WebsocketAudioServer.this.sharedByteBuffer.length) {
-//        this.lineOut.write(WebsocketAudioServer.this.sharedByteBuffer, 0, nbytes);
-//        this.framesWritten += (long)(nbytes / this.format.getFrameSize());
-//      }
-//
-//      long framePos = this.lineOut.getLongFramePosition();
-//      this.latencyFrames = (int)(this.framesWritten - framePos);
-//      if (this.latencyFrames < 0) {
-//        this.latencyFrames = 0;
-//      }
-//
-//      return 0;
-//    }
+    if (!buffer.isRealTime()) {
       return 0;
+    } else {
+      int nbytes = buffer.convertToByteArray(WebsocketAudioServer.this.sharedByteBuffer, 0, this.format);
+      if (this.lineOut.available() > WebsocketAudioServer.this.sharedByteBuffer.length) {
+        this.lineOut.write(WebsocketAudioServer.this.sharedByteBuffer, 0, nbytes);
+        this.framesWritten += (long)(nbytes / this.format.getFrameSize());
+      }
+
+      long framePos = this.lineOut.getLongFramePosition();
+      this.latencyFrames = (int)(this.framesWritten - framePos);
+      if (this.latencyFrames < 0) {
+        this.latencyFrames = 0;
+      }
+
+      return 0;
+    }
     }
 
     public boolean isActive() {

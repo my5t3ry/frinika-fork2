@@ -28,7 +28,6 @@ public abstract class WebsocketDataLine implements DataLine {
   public static final FloatControl.Type CHORUS_SEND = new FloatControl.Type(
       "Chorus Send") {
   };
-  protected Control control_mutex;
 
   protected static final class AudioFloatInputStreamResampler extends
       AudioFloatInputStream {
@@ -408,9 +407,12 @@ public abstract class WebsocketDataLine implements DataLine {
 
   protected abstract void processAudioLogic(SoftAudioBuffer[] buffers);
 
+  protected Object control_mutex ;
+
   WebsocketDataLine(WebsocketMixer mixer, DataLine.Info info) {
     this.mixer = mixer;
     this.info = info;
+    this.control_mutex =mixer.control_mutex;
 
     controls = new Control[] { gain_control, mute_control, balance_control,
         pan_control, reverbsend_control, chorussend_control,
