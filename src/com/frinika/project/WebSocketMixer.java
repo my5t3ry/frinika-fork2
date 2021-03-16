@@ -1,6 +1,6 @@
 package com.frinika.project;
 
-import javax.KKKsound.sampled.Control;
+import javax.sound.sampled.Control;
 import javax.sound.sampled.Control.Type;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineListener;
