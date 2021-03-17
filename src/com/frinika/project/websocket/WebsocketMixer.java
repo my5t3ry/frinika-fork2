@@ -1,5 +1,6 @@
 package com.frinika.project.websocket;
 
+import com.sun.media.sound.DirectAudioDeviceProvider;
 import com.sun.media.sound.SoftAudioPusher;
 import com.sun.media.sound.SoftJitterCorrector;
 import java.io.IOException;
@@ -335,93 +336,93 @@ public final class WebsocketMixer implements Mixer {
 
                 AudioInputStream ais = openStream(getFormat());
 
-//                if (line == null) {
-//                    synchronized (WebsocketMixingProvider.mutex) {
-//                      WebsocketMixingProvider.lockthread = Thread
-//                                .currentThread();
-//                    }
+                if (line == null) {
+                    synchronized (WebsocketMixingProvider.mutex) {
+                      WebsocketMixingProvider.lockthread = Thread
+                                .currentThread();
+                    }
+//
+                    try {
+                        Mixer defaultmixer = new WebsocketAudioDeviceProvider().getMixer(null);
+                        if (defaultmixer != null)
+                        {
+                            // Search for suitable line
 
-//                    try {
-//                        Mixer defaultmixer = new DummyMixer();
-//                        if (defaultmixer != null)
-//                        {
-//                            // Search for suitable line
-//
-//                            DataLine.Info idealinfo = null;
-//                            AudioFormat idealformat = null;
-//
-//                            Line.Info[] lineinfos = defaultmixer.getSourceLineInfo();
-//                            idealFound:
-//                            for (int i = 0; i < lineinfos.length; i++) {
-//                                if(lineinfos[i].getLineClass() == SourceDataLine.class)
-//                                {
-//                                    DataLine.Info info = (DataLine.Info)lineinfos[i];
-//                                    AudioFormat[] formats = info.getFormats();
-//                                    for (int j = 0; j < formats.length; j++) {
-//                                        AudioFormat format = formats[j];
-//                                      if (format.getChannels() == 2 ||
-//                                          format.getChannels() == AudioSystem.NOT_SPECIFIED) {
-//                                        if (format.getEncoding().equals(Encoding.PCM_SIGNED) ||
-//                                            format.getEncoding().equals(Encoding.PCM_UNSIGNED)) {
-//                                          if (format.getSampleRate() == AudioSystem.NOT_SPECIFIED
-//                                              ||
-//                                              format.getSampleRate() == 48000.0) {
-//                                            if (format.getSampleSizeInBits()
-//                                                == AudioSystem.NOT_SPECIFIED ||
-//                                                format.getSampleSizeInBits() == 16) {
-//                                              idealinfo = info;
-//                                              int ideal_channels = format.getChannels();
-//                                              boolean ideal_signed = format.getEncoding()
-//                                                  .equals(Encoding.PCM_SIGNED);
-//                                              float ideal_rate = format.getSampleRate();
-//                                              boolean ideal_endian = format.isBigEndian();
-//                                              int ideal_bits = format.getSampleSizeInBits();
-//                                              if (ideal_bits == AudioSystem.NOT_SPECIFIED) {
-//                                                ideal_bits = 16;
-//                                              }
-//                                              if (ideal_channels == AudioSystem.NOT_SPECIFIED) {
-//                                                ideal_channels = 2;
-//                                              }
-//                                              if (ideal_rate == AudioSystem.NOT_SPECIFIED) {
-//                                                ideal_rate = 48000;
-//                                              }
-//                                              idealformat = new AudioFormat(ideal_rate,
-//                                                  ideal_bits,
-//                                                  ideal_channels, ideal_signed, ideal_endian);
-//                                              break idealFound;
-//                                            }
-//                                          }
-//                                        }
-//                                      }
-//                                    }
-//                                }
-//                            }
-//
-//                            if(idealformat != null)
-//                            {
-//                                format = idealformat;
-//                                line = (WebsocketSourceDataLine) defaultmixer.getLine(idealinfo);
-//                            }
-//                        }
-//
+                            DataLine.Info idealinfo = null;
+                            AudioFormat idealformat = null;
+
+                            Line.Info[] lineinfos = defaultmixer.getSourceLineInfo();
+                            idealFound:
+                            for (int i = 0; i < lineinfos.length; i++) {
+                                if(lineinfos[i].getLineClass() == SourceDataLine.class)
+                                {
+                                    DataLine.Info info = (DataLine.Info)lineinfos[i];
+                                    AudioFormat[] formats = info.getFormats();
+                                    for (int j = 0; j < formats.length; j++) {
+                                        AudioFormat format = formats[j];
+                                      if (format.getChannels() == 2 ||
+                                          format.getChannels() == AudioSystem.NOT_SPECIFIED) {
+                                        if (format.getEncoding().equals(Encoding.PCM_SIGNED) ||
+                                            format.getEncoding().equals(Encoding.PCM_UNSIGNED)) {
+                                          if (format.getSampleRate() == AudioSystem.NOT_SPECIFIED
+                                              ||
+                                              format.getSampleRate() == 48000.0) {
+                                            if (format.getSampleSizeInBits()
+                                                == AudioSystem.NOT_SPECIFIED ||
+                                                format.getSampleSizeInBits() == 16) {
+                                              idealinfo = info;
+                                              int ideal_channels = format.getChannels();
+                                              boolean ideal_signed = format.getEncoding()
+                                                  .equals(Encoding.PCM_SIGNED);
+                                              float ideal_rate = format.getSampleRate();
+                                              boolean ideal_endian = format.isBigEndian();
+                                              int ideal_bits = format.getSampleSizeInBits();
+                                              if (ideal_bits == AudioSystem.NOT_SPECIFIED) {
+                                                ideal_bits = 16;
+                                              }
+                                              if (ideal_channels == AudioSystem.NOT_SPECIFIED) {
+                                                ideal_channels = 2;
+                                              }
+                                              if (ideal_rate == AudioSystem.NOT_SPECIFIED) {
+                                                ideal_rate = 48000;
+                                              }
+                                              idealformat = new AudioFormat(ideal_rate,
+                                                  ideal_bits,
+                                                  ideal_channels, ideal_signed, ideal_endian);
+                                              break idealFound;
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                }
+                            }
+
+                            if(idealformat != null)
+                            {
+                                format = idealformat;
+                                line = (WebsocketSourceDataLine) defaultmixer.getLine(idealinfo);
+                            }
+                        }
+
 //                      if (line == null) {
 //                        AudioFormat[] audioFormats = new AudioFormat[1];
+//                        line = WebsocketAudioDevicee.D;
 //
 //                      }
-//                    } finally {
-//                        synchronized (WebsocketMixingProvider.mutex) {
-//                          WebsocketMixingProvider.lockthread = null;
-//                        }
-//                    }
-//
-//                  if (line == null) {
-//                    throw new IllegalArgumentException("No line matching "
-//                        + info.toString() + " is supported.");
-//                  }
-//                }
-//
-//                double latency = this.latency;
-              line = new WebsocketSourceDataLine(this,new DataLine.Info(WebsocketMixer.class,this.getFormat()));
+                    } finally {
+                        synchronized (WebsocketMixingProvider.mutex) {
+                          WebsocketMixingProvider.lockthread = null;
+                        }
+                    }
+
+                  if (line == null) {
+                    throw new IllegalArgumentException("No line matching "
+                        + info.toString() + " is supported.");
+                  }
+                }
+
+                double latency = this.latency;
 
                 if (!line.isOpen()) {
                     int bufferSize = getFormat().getFrameSize()

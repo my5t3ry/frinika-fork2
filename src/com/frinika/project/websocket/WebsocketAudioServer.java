@@ -5,14 +5,19 @@
 
 package com.frinika.project.websocket;
 
+import com.frinika.project.websocket.WebsocketAudioDevicee.DirectDL;
+import com.frinika.project.websocket.WebsocketAudioDevicee.DirectSDL;
+import com.frinika.project.websocket.WebsocketAudioDevicee.DirectTDL;
 import com.frinika.toot.PriorityAudioServer;
 import com.sun.media.sound.SoftMixingMixer;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
@@ -40,19 +45,19 @@ public class WebsocketAudioServer
   private List<WebsocketAudioServer.WebsocketAudioOutput> outputs;
   private List<WebsocketAudioServer.WebsockeAudioInput> inputs;
   private int lineBufferBytes = 32768;
-  private WebsocketMixer mixer = new WebsocketMixer();
+  private Mixer mixer ;
   private boolean running = false;
 
   public WebsocketAudioServer() {
     bufferFrames = 128;
+    this.format = new AudioFormat(Encoding.PCM_SIGNED,44100,16,2,4,44100,false);
     this.outputs = new ArrayList();
+    this.mixer = new WebsocketAudioDeviceProvider().getMixer(null);
     this.inputs = new ArrayList();
   }
 
   protected void checkFormat() {
     if (this.format == null) {
-      this.format = new AudioFormat(this.getSampleRate(), this.getSampleSizeInBits(), 2, true,
-          false);
       this.lineBufferBytes = this.format.getFrameSize() * (int) this.getSampleRate() / 5;
       this.sharedByteBuffer = this.createByteBuffer();
     }
@@ -284,7 +289,7 @@ public class WebsocketAudioServer
 
   protected class WebsockeAudioInput extends WebsockerSoundAudioLine {
 
-    protected TargetDataLine lineIn;
+    protected WebsocketAudioDevicee.DirectTDL lineIn;
     protected javax.sound.sampled.DataLine.Info infoIn;
     protected MetaInfo metaInfo;
     protected long framesRead = 0L;
@@ -293,7 +298,7 @@ public class WebsocketAudioServer
     public WebsockeAudioInput(AudioFormat format, Info info, String label, String location)
         throws LineUnavailableException {
       super(format, info, label);
-      this.infoIn = new javax.sound.sampled.DataLine.Info(TargetDataLine.class, format);
+      this.infoIn = new javax.sound.sampled.DataLine.Info(DirectTDL.class, format);
       if (!mixer.isLineSupported(this.infoIn)) {
         throw new LineUnavailableException(this.mixerInfo + " does not support " + this.infoIn);
       } else {
@@ -303,7 +308,7 @@ public class WebsocketAudioServer
 
     public void open() throws Exception {
       if (this.lineIn == null || !this.lineIn.isOpen()) {
-        this.lineIn = (TargetDataLine) AudioSystem.getMixer(this.mixerInfo).getLine(this.infoIn);
+        this.lineIn = (WebsocketAudioDevicee.DirectTDL) mixer.getLine(this.infoIn);
         this.lineIn.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
       }
     }
@@ -364,24 +369,20 @@ public class WebsocketAudioServer
 
   protected class WebsocketAudioOutput extends WebsockerSoundAudioLine {
 
-    protected WebsocketSourceDataLine lineOut;
+    protected WebsocketAudioDevicee.DirectSDL lineOut;
     protected javax.sound.sampled.DataLine.Info infoOut;
     protected long framesWritten = 0L;
 
     public WebsocketAudioOutput(AudioFormat format, Info info, String label)
         throws LineUnavailableException {
       super(format, info, label);
-      this.infoOut = new javax.sound.sampled.DataLine.Info(WebsocketSourceDataLine.class, format);
-      if (!mixer.isLineSupported(this.infoOut)) {
-        throw new LineUnavailableException(info + " does not support " + this.infoOut);
-      } else {
+      this.infoOut = new javax.sound.sampled.DataLine.Info(WebsocketAudioDevicee.DirectSDL.class, format);
 
-      }
     }
 
     public void open() throws Exception {
       if (this.lineOut == null || !this.lineOut.isOpen()) {
-        this.lineOut = (WebsocketSourceDataLine) mixer.getLine(this.infoOut);
+        this.lineOut = (DirectSDL) mixer.getLine(this.infoOut);
         this.lineOut.open(this.format, WebsocketAudioServer.this.lineBufferBytes);
        }
     }
